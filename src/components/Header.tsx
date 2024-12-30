@@ -14,7 +14,7 @@ const Header: React.FC = () => {
           <ul className="flex space-x-4">
             <li><Link to="/student" className="hover:text-blue-200">Students</Link></li>
             <li><Link to="/employer" className="hover:text-blue-200">Employers</Link></li>
-            <li><Link to="/resources" className="hover:text-blue-200">Resources</Link></li>
+            <li><Link to="/admin" className="hover:text-blue-200">Admin</Link></li>
             <li><Link to="/success-stories" className="hover:text-blue-200">Success Stories</Link></li>
             <li><Link to="/faq" className="hover:text-blue-200">FAQ</Link></li>
           </ul>

@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Search, Filter } from 'lucide-react';
+import ApplyModal from '../components/ApplyModal';
+import EditProfileModal from '../components/EditProfileModal';
 
 const studentSchema = z.object({
   email: z.string().email(),
@@ -13,6 +15,10 @@ type StudentFormData = z.infer<typeof studentSchema>;
 
 const StudentPortal: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [selectedInternship, setSelectedInternship] = useState<{ title: string; company: string } | null>(null);
+
   const { register, handleSubmit, formState: { errors } } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
   });
@@ -20,6 +26,11 @@ const StudentPortal: React.FC = () => {
   const onSubmit = (data: StudentFormData) => {
     console.log(data);
     setIsLoggedIn(true);
+  };
+
+  const handleApplyClick = (title: string, company: string) => {
+    setSelectedInternship({ title, company });
+    setIsApplyModalOpen(true);
   };
 
   if (!isLoggedIn) {
@@ -92,12 +103,14 @@ const StudentPortal: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">Internship Listings</h2>
             <div className="space-y-4">
-              {/* Sample internship listings */}
               <div className="border-b pb-4">
                 <h3 className="text-xl font-semibold">Software Engineering Intern</h3>
                 <p className="text-gray-600">TechCorp Inc.</p>
                 <p className="text-sm text-gray-500">Mumbai, Maharashtra • 3 months</p>
-                <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
+                <button
+                  onClick={() => handleApplyClick("Software Engineering Intern", "TechCorp Inc.")}
+                  className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
+                >
                   Apply Now
                 </button>
               </div>
@@ -105,11 +118,13 @@ const StudentPortal: React.FC = () => {
                 <h3 className="text-xl font-semibold">Data Science Intern</h3>
                 <p className="text-gray-600">Analytics Pro</p>
                 <p className="text-sm text-gray-500">Pune, Maharashtra • 6 months</p>
-                <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
+                <button
+                  onClick={() => handleApplyClick("Data Science Intern", "Analytics Pro")}
+                  className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
+                >
                   Apply Now
                 </button>
               </div>
-              {/* Add more internship listings as needed */}
             </div>
           </div>
         </div>
@@ -122,7 +137,10 @@ const StudentPortal: React.FC = () => {
               <p><strong>Department:</strong> Computer Engineering</p>
               <p><strong>Year:</strong> 3rd Year</p>
             </div>
-            <button className="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">
+            <button
+              onClick={() => setIsEditProfileModalOpen(true)}
+              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300"
+            >
               Edit Profile
             </button>
           </div>
@@ -141,6 +159,20 @@ const StudentPortal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {selectedInternship && (
+        <ApplyModal
+          isOpen={isApplyModalOpen}
+          onClose={() => setIsApplyModalOpen(false)}
+          internshipTitle={selectedInternship.title}
+          companyName={selectedInternship.company}
+        />
+      )}
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+      />
     </div>
   );
 };
