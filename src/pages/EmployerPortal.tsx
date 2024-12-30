@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Briefcase, Users, FileText } from 'lucide-react';
 import EditEmployerProfileModal from '../components/EditEmployerProfileModal';
+import { InternshipActions } from '../components/internship/InternshipActions';
 
 const employerSchema = z.object({
   email: z.string().email(),
@@ -12,13 +13,90 @@ const employerSchema = z.object({
 
 type EmployerFormData = z.infer<typeof employerSchema>;
 
+interface Internship {
+  id: string;
+  title: string;
+  company: string;
+  duration: string;
+  location: string;
+  description: string;
+  requirements: string;
+  status: 'active' | 'closed';
+  applicants: Array<{
+    id: string;
+    name: string;
+    email: string;
+    status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected';
+    appliedDate: string;
+  }>;
+}
+
+// Mock internships data
+const mockInternships: Internship[] = [
+  {
+    id: '1',
+    title: 'Software Engineering Intern',
+    company: 'TechCorp Inc.',
+    duration: '3 months',
+    location: 'Mumbai',
+    description: 'Looking for a passionate software engineering intern...',
+    requirements: 'Strong programming fundamentals, knowledge of web technologies',
+    status: 'active' as const,
+    applicants: [
+      {
+        id: 'a1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        status: 'pending' as const,
+        appliedDate: '2024-03-01',
+      },
+      {
+        id: 'a2',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        status: 'reviewed' as const,
+        appliedDate: '2024-03-02',
+      },
+    ],
+  },
+  {
+    id: '2',
+    title: 'Data Science Intern',
+    company: 'TechCorp Inc.',
+    duration: '6 months',
+    location: 'Mumbai',
+    description: 'Join our data science team...',
+    requirements: 'Statistics, Python, Machine Learning',
+    status: 'active',
+    applicants: [
+      {
+        id: 'a3',
+        name: 'Alice Johnson',
+        email: 'alice@example.com',
+        status: 'shortlisted' as const,
+        appliedDate: '2024-03-03',
+      },
+    ],
+  },
+];
+
 const EmployerPortal: React.FC = () => {
+  const [internships, setInternships] = useState<Internship[]>(mockInternships);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<EmployerFormData>({
     resolver: zodResolver(employerSchema),
   });
 
+  const handleInternshipStatusChange = (internshipId: string, newStatus: 'active' | 'closed') => {
+    setInternships(prevInternships =>
+      prevInternships.map(internship =>
+        internship.id === internshipId
+          ? { ...internship, status: newStatus }
+          : internship
+      )
+    );
+  };
   const onSubmit = (data: EmployerFormData) => {
     console.log(data);
     setIsLoggedIn(true);
@@ -64,6 +142,7 @@ const EmployerPortal: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Employer Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Left column - Post Internship Form */}
         <div className="col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 className="text-2xl font-semibold mb-4">Post a New Internship</h2>
@@ -94,6 +173,8 @@ const EmployerPortal: React.FC = () => {
             </form>
           </div>
         </div>
+
+        {/* Right column - Company Profile and Stats */}
         <div>
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 className="text-2xl font-semibold mb-4">Company Profile</h2>
@@ -117,21 +198,27 @@ const EmployerPortal: React.FC = () => {
                 <Briefcase size={24} className="mr-2 text-green-600" />
                 <div>
                   <p className="font-semibold">Active Internships</p>
-                  <p className="text-2xl font-bold">3</p>
+                  <p className="text-2xl font-bold">{mockInternships.length}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Users size={24} className="mr-2 text-blue-600" />
                 <div>
                   <p className="font-semibold">Total Applicants</p>
-                  <p className="text-2xl font-bold">27</p>
+                  <p className="text-2xl font-bold">
+                    {mockInternships.reduce((sum, internship) => sum + internship.applicants.length, 0)}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center">
                 <FileText size={24} className="mr-2 text-purple-600" />
                 <div>
                   <p className="font-semibold">Pending Reviews</p>
-                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-2xl font-bold">
+                    {mockInternships.reduce((sum, internship) => 
+                      sum + internship.applicants.filter(a => a.status === 'pending').length, 0
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
@@ -139,59 +226,52 @@ const EmployerPortal: React.FC = () => {
         </div>
       </div>
 
+      {/* Active Internships Table */}
+       <div className="mt-8">
+      <h2 className="text-2xl font-semibold mb-4">Active Internships</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left py-2">Title</th>
+              <th className="text-left py-2">Duration</th>
+              <th className="text-left py-2">Applicants</th>
+              <th className="text-left py-2">Status</th>
+              <th className="text-left py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {internships.map((internship) => (
+              <tr key={internship.id} className="border-b">
+                <td className="py-2">{internship.title}</td>
+                <td className="py-2">{internship.duration}</td>
+                <td className="py-2">{internship.applicants.length}</td>
+                <td className="py-2">
+                  <span className={`px-2 py-1 rounded-full text-sm ${
+                    internship.status === 'active'
+                      ? 'bg-green-200 text-green-800'
+                      : 'bg-red-200 text-red-800'
+                  }`}>
+                    {internship.status.charAt(0).toUpperCase() + internship.status.slice(1)}
+                  </span>
+                </td>
+                <td className="py-2">
+                  <InternshipActions
+                    internship={internship}
+                    onStatusChange={handleInternshipStatusChange}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
       <EditEmployerProfileModal
         isOpen={isEditProfileModalOpen}
         onClose={() => setIsEditProfileModalOpen(false)}
       />
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Active Internships</h2>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2">Title</th>
-                <th className="text-left py-2">Duration</th>
-                <th className="text-left py-2">Applicants</th>
-                <th className="text-left py-2">Status</th>
-                <th className="text-left py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b">
-                <td className="py-2">Software Engineering Intern</td>
-                <td className="py-2">3 months</td>
-                <td className="py-2">15</td>
-                <td className="py-2"><span className="bg-green-200 text-green-800 py-1 px-2 rounded-full text-sm">Active</span></td>
-                <td className="py-2">
-                  <button className="text-blue-600 hover:text-blue-800">View</button>
-                  <button className="ml-2 text-red-600 hover:text-red-800">Close</button>
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2">Data Science Intern</td>
-                <td className="py-2">6 months</td>
-                <td className="py-2">8</td>
-                <td className="py-2"><span className="bg-green-200 text-green-800 py-1 px-2 rounded-full text-sm">Active</span></td>
-                <td className="py-2">
-                  <button className="text-blue-600 hover:text-blue-800">View</button>
-                  <button className="ml-2 text-red-600 hover:text-red-800">Close</button>
-                </td>
-              </tr>
-              <tr>
-                <td className="py-2">UI/UX Design Intern</td>
-                <td className="py-2">4 months</td>
-                <td className="py-2">4</td>
-                <td className="py-2"><span className="bg-green-200 text-green-800 py-1 px-2 rounded-full text-sm">Active</span></td>
-                <td className="py-2">
-                  <button className="text-blue-600 hover:text-blue-800">View</button>
-                  <button className="ml-2 text-red-600 hover:text-red-800">Close</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 };
