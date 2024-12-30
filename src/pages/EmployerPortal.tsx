@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Briefcase, Users, FileText } from 'lucide-react';
+import EditEmployerProfileModal from '../components/EditEmployerProfileModal';
 
 const employerSchema = z.object({
   email: z.string().email(),
@@ -13,6 +14,7 @@ type EmployerFormData = z.infer<typeof employerSchema>;
 
 const EmployerPortal: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<EmployerFormData>({
     resolver: zodResolver(employerSchema),
   });
@@ -101,9 +103,13 @@ const EmployerPortal: React.FC = () => {
               <p><strong>Location:</strong> Mumbai, Maharashtra</p>
               <p><strong>Website:</strong> www.techcorp.com</p>
             </div>
-            <button className="mt-4 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300">
+            <button
+              onClick={() => setIsEditProfileModalOpen(true)}
+              className="mt-4 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300"
+            >
               Edit Profile
-            </button></div>
+            </button>
+          </div>
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">Dashboard</h2>
             <div className="space-y-4">
@@ -132,6 +138,12 @@ const EmployerPortal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <EditEmployerProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+      />
+
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4">Active Internships</h2>
         <div className="bg-white p-6 rounded-lg shadow-md">
