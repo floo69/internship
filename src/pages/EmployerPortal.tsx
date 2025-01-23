@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Briefcase, Users, FileText } from 'lucide-react';
-import EditEmployerProfileModal from '../components/EditEmployerProfileModal';
-import { InternshipActions } from '../components/internship/InternshipActions';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Briefcase, Users, FileText } from "lucide-react";
+import EditEmployerProfileModal from "../components/EditEmployerProfileModal";
+import { InternshipActions } from "../components/internship/InternshipActions";
+import axios from "axios";
 
 const employerSchema = z.object({
   email: z.string().email(),
@@ -21,12 +22,12 @@ interface Internship {
   location: string;
   description: string;
   requirements: string;
-  status: 'active' | 'closed';
+  status: "active" | "closed";
   applicants: Array<{
     id: string;
     name: string;
     email: string;
-    status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected';
+    status: "pending" | "reviewed" | "shortlisted" | "rejected";
     appliedDate: string;
   }>;
 }
@@ -34,47 +35,48 @@ interface Internship {
 // Mock internships data
 const mockInternships: Internship[] = [
   {
-    id: '1',
-    title: 'Software Engineering Intern',
-    company: 'TechCorp Inc.',
-    duration: '3 months',
-    location: 'Mumbai',
-    description: 'Looking for a passionate software engineering intern...',
-    requirements: 'Strong programming fundamentals, knowledge of web technologies',
-    status: 'active' as const,
+    id: "1",
+    title: "Software Engineering Intern",
+    company: "TechCorp Inc.",
+    duration: "3 months",
+    location: "Mumbai",
+    description: "Looking for a passionate software engineering intern...",
+    requirements:
+      "Strong programming fundamentals, knowledge of web technologies",
+    status: "active" as const,
     applicants: [
       {
-        id: 'a1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        status: 'pending' as const,
-        appliedDate: '2024-03-01',
+        id: "a1",
+        name: "John Doe",
+        email: "john@example.com",
+        status: "pending" as const,
+        appliedDate: "2024-03-01",
       },
       {
-        id: 'a2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        status: 'reviewed' as const,
-        appliedDate: '2024-03-02',
+        id: "a2",
+        name: "Jane Smith",
+        email: "jane@example.com",
+        status: "reviewed" as const,
+        appliedDate: "2024-03-02",
       },
     ],
   },
   {
-    id: '2',
-    title: 'Data Science Intern',
-    company: 'TechCorp Inc.',
-    duration: '6 months',
-    location: 'Mumbai',
-    description: 'Join our data science team...',
-    requirements: 'Statistics, Python, Machine Learning',
-    status: 'active',
+    id: "2",
+    title: "Data Science Intern",
+    company: "TechCorp Inc.",
+    duration: "6 months",
+    location: "Mumbai",
+    description: "Join our data science team...",
+    requirements: "Statistics, Python, Machine Learning",
+    status: "active",
     applicants: [
       {
-        id: 'a3',
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        status: 'shortlisted' as const,
-        appliedDate: '2024-03-03',
+        id: "a3",
+        name: "Alice Johnson",
+        email: "alice@example.com",
+        status: "shortlisted" as const,
+        appliedDate: "2024-03-03",
       },
     ],
   },
@@ -84,24 +86,38 @@ const EmployerPortal: React.FC = () => {
   const [internships, setInternships] = useState<Internship[]>(mockInternships);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<EmployerFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<EmployerFormData>({
     resolver: zodResolver(employerSchema),
   });
 
-  const handleInternshipStatusChange = (internshipId: string, newStatus: 'active' | 'closed') => {
-    setInternships(prevInternships =>
-      prevInternships.map(internship =>
+  const handleInternshipStatusChange = (
+    internshipId: string,
+    newStatus: "active" | "closed"
+  ) => {
+    setInternships((prevInternships) =>
+      prevInternships.map((internship) =>
         internship.id === internshipId
           ? { ...internship, status: newStatus }
           : internship
       )
     );
   };
-  const onSubmit = (data: EmployerFormData) => {
-    console.log(data);
-    setIsLoggedIn(true);
+  const onSubmit = async (data: EmployerFormData) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/employers`,
+        data
+      );
+      console.log(response.data);
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error("Error creating employer:", error);
+    }
   };
-
   if (!isLoggedIn) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -110,26 +126,41 @@ const EmployerPortal: React.FC = () => {
           <h2 className="text-2xl font-semibold mb-6">Login</h2>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-4">
-              <label htmlFor="email" className="block mb-2">Email</label>
+              <label htmlFor="email" className="block mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
-                {...register('email')}
+                {...register("email")}
                 className="w-full px-3 py-2 border rounded-md"
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
             <div className="mb-6">
-              <label htmlFor="password" className="block mb-2">Password</label>
+              <label htmlFor="password" className="block mb-2">
+                Password
+              </label>
               <input
                 type="password"
                 id="password"
-                {...register('password')}
+                {...register("password")}
                 className="w-full px-3 py-2 border rounded-md"
               />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
-            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300">
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300"
+            >
               Login
             </button>
           </form>
@@ -145,29 +176,65 @@ const EmployerPortal: React.FC = () => {
         {/* Left column - Post Internship Form */}
         <div className="col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Post a New Internship</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Post a New Internship
+            </h2>
             <form>
               <div className="mb-4">
-                <label htmlFor="title" className="block mb-2">Internship Title</label>
-                <input type="text" id="title" className="w-full px-3 py-2 border rounded-md" />
+                <label htmlFor="title" className="block mb-2">
+                  Internship Title
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  className="w-full px-3 py-2 border rounded-md"
+                />
               </div>
               <div className="mb-4">
-                <label htmlFor="description" className="block mb-2">Description</label>
-                <textarea id="description" rows={4} className="w-full px-3 py-2 border rounded-md"></textarea>
+                <label htmlFor="description" className="block mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  rows={4}
+                  className="w-full px-3 py-2 border rounded-md"
+                ></textarea>
               </div>
               <div className="mb-4">
-                <label htmlFor="duration" className="block mb-2">Duration</label>
-                <input type="text" id="duration" className="w-full px-3 py-2 border rounded-md" placeholder="e.g., 3 months" />
+                <label htmlFor="duration" className="block mb-2">
+                  Duration
+                </label>
+                <input
+                  type="text"
+                  id="duration"
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="e.g., 3 months"
+                />
               </div>
               <div className="mb-4">
-                <label htmlFor="location" className="block mb-2">Location</label>
-                <input type="text" id="location" className="w-full px-3 py-2 border rounded-md" />
+                <label htmlFor="location" className="block mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  id="location"
+                  className="w-full px-3 py-2 border rounded-md"
+                />
               </div>
               <div className="mb-4">
-                <label htmlFor="requirements" className="block mb-2">Requirements</label>
-                <textarea id="requirements" rows={3} className="w-full px-3 py-2 border rounded-md"></textarea>
+                <label htmlFor="requirements" className="block mb-2">
+                  Requirements
+                </label>
+                <textarea
+                  id="requirements"
+                  rows={3}
+                  className="w-full px-3 py-2 border rounded-md"
+                ></textarea>
               </div>
-              <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300">
+              <button
+                type="submit"
+                className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300"
+              >
                 Post Internship
               </button>
             </form>
@@ -179,10 +246,18 @@ const EmployerPortal: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 className="text-2xl font-semibold mb-4">Company Profile</h2>
             <div className="space-y-2">
-              <p><strong>Company:</strong> TechCorp Inc.</p>
-              <p><strong>Industry:</strong> Information Technology</p>
-              <p><strong>Location:</strong> Mumbai, Maharashtra</p>
-              <p><strong>Website:</strong> www.techcorp.com</p>
+              <p>
+                <strong>Company:</strong> TechCorp Inc.
+              </p>
+              <p>
+                <strong>Industry:</strong> Information Technology
+              </p>
+              <p>
+                <strong>Location:</strong> Mumbai, Maharashtra
+              </p>
+              <p>
+                <strong>Website:</strong> www.techcorp.com
+              </p>
             </div>
             <button
               onClick={() => setIsEditProfileModalOpen(true)}
@@ -206,7 +281,10 @@ const EmployerPortal: React.FC = () => {
                 <div>
                   <p className="font-semibold">Total Applicants</p>
                   <p className="text-2xl font-bold">
-                    {mockInternships.reduce((sum, internship) => sum + internship.applicants.length, 0)}
+                    {mockInternships.reduce(
+                      (sum, internship) => sum + internship.applicants.length,
+                      0
+                    )}
                   </p>
                 </div>
               </div>
@@ -215,8 +293,13 @@ const EmployerPortal: React.FC = () => {
                 <div>
                   <p className="font-semibold">Pending Reviews</p>
                   <p className="text-2xl font-bold">
-                    {mockInternships.reduce((sum, internship) => 
-                      sum + internship.applicants.filter(a => a.status === 'pending').length, 0
+                    {mockInternships.reduce(
+                      (sum, internship) =>
+                        sum +
+                        internship.applicants.filter(
+                          (a) => a.status === "pending"
+                        ).length,
+                      0
                     )}
                   </p>
                 </div>
@@ -227,46 +310,49 @@ const EmployerPortal: React.FC = () => {
       </div>
 
       {/* Active Internships Table */}
-       <div className="mt-8">
-      <h2 className="text-2xl font-semibold mb-4">Active Internships</h2>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-2">Title</th>
-              <th className="text-left py-2">Duration</th>
-              <th className="text-left py-2">Applicants</th>
-              <th className="text-left py-2">Status</th>
-              <th className="text-left py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {internships.map((internship) => (
-              <tr key={internship.id} className="border-b">
-                <td className="py-2">{internship.title}</td>
-                <td className="py-2">{internship.duration}</td>
-                <td className="py-2">{internship.applicants.length}</td>
-                <td className="py-2">
-                  <span className={`px-2 py-1 rounded-full text-sm ${
-                    internship.status === 'active'
-                      ? 'bg-green-200 text-green-800'
-                      : 'bg-red-200 text-red-800'
-                  }`}>
-                    {internship.status.charAt(0).toUpperCase() + internship.status.slice(1)}
-                  </span>
-                </td>
-                <td className="py-2">
-                  <InternshipActions
-                    internship={internship}
-                    onStatusChange={handleInternshipStatusChange}
-                  />
-                </td>
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">Active Internships</h2>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2">Title</th>
+                <th className="text-left py-2">Duration</th>
+                <th className="text-left py-2">Applicants</th>
+                <th className="text-left py-2">Status</th>
+                <th className="text-left py-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {internships.map((internship) => (
+                <tr key={internship.id} className="border-b">
+                  <td className="py-2">{internship.title}</td>
+                  <td className="py-2">{internship.duration}</td>
+                  <td className="py-2">{internship.applicants.length}</td>
+                  <td className="py-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm ${
+                        internship.status === "active"
+                          ? "bg-green-200 text-green-800"
+                          : "bg-red-200 text-red-800"
+                      }`}
+                    >
+                      {internship.status.charAt(0).toUpperCase() +
+                        internship.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="py-2">
+                    <InternshipActions
+                      internship={internship}
+                      onStatusChange={handleInternshipStatusChange}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
       <EditEmployerProfileModal
         isOpen={isEditProfileModalOpen}

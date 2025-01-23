@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Search, Filter } from 'lucide-react';
-import ApplyModal from '../components/ApplyModal';
-import EditProfileModal from '../components/EditProfileModal';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Search, Filter } from "lucide-react";
+import ApplyModal from "../components/ApplyModal";
+import EditProfileModal from "../components/EditProfileModal";
+import axios from "axios";
 
 const studentSchema = z.object({
   email: z.string().email(),
@@ -17,15 +18,30 @@ const StudentPortal: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [selectedInternship, setSelectedInternship] = useState<{ title: string; company: string } | null>(null);
+  const [selectedInternship, setSelectedInternship] = useState<{
+    title: string;
+    company: string;
+  } | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<StudentFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
   });
 
-  const onSubmit = (data: StudentFormData) => {
-    console.log(data);
-    setIsLoggedIn(true);
+  const onSubmit = async (data: StudentFormData) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/students`,
+        data
+      );
+      console.log(response.data);
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error("Error creating student:", error);
+    }
   };
 
   const handleApplyClick = (title: string, company: string) => {
@@ -41,26 +57,41 @@ const StudentPortal: React.FC = () => {
           <h2 className="text-2xl font-semibold mb-6">Login</h2>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-4">
-              <label htmlFor="email" className="block mb-2">Email</label>
+              <label htmlFor="email" className="block mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
-                {...register('email')}
+                {...register("email")}
                 className="w-full px-3 py-2 border rounded-md"
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
             <div className="mb-6">
-              <label htmlFor="password" className="block mb-2">Password</label>
+              <label htmlFor="password" className="block mb-2">
+                Password
+              </label>
               <input
                 type="password"
                 id="password"
-                {...register('password')}
+                {...register("password")}
                 className="w-full px-3 py-2 border rounded-md"
               />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300"
+            >
               Login
             </button>
           </form>
@@ -104,11 +135,20 @@ const StudentPortal: React.FC = () => {
             <h2 className="text-2xl font-semibold mb-4">Internship Listings</h2>
             <div className="space-y-4">
               <div className="border-b pb-4">
-                <h3 className="text-xl font-semibold">Software Engineering Intern</h3>
+                <h3 className="text-xl font-semibold">
+                  Software Engineering Intern
+                </h3>
                 <p className="text-gray-600">TechCorp Inc.</p>
-                <p className="text-sm text-gray-500">Mumbai, Maharashtra • 3 months</p>
+                <p className="text-sm text-gray-500">
+                  Mumbai, Maharashtra • 3 months
+                </p>
                 <button
-                  onClick={() => handleApplyClick("Software Engineering Intern", "TechCorp Inc.")}
+                  onClick={() =>
+                    handleApplyClick(
+                      "Software Engineering Intern",
+                      "TechCorp Inc."
+                    )
+                  }
                   className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
                 >
                   Apply Now
@@ -117,9 +157,13 @@ const StudentPortal: React.FC = () => {
               <div className="border-b pb-4">
                 <h3 className="text-xl font-semibold">Data Science Intern</h3>
                 <p className="text-gray-600">Analytics Pro</p>
-                <p className="text-sm text-gray-500">Pune, Maharashtra • 6 months</p>
+                <p className="text-sm text-gray-500">
+                  Pune, Maharashtra • 6 months
+                </p>
                 <button
-                  onClick={() => handleApplyClick("Data Science Intern", "Analytics Pro")}
+                  onClick={() =>
+                    handleApplyClick("Data Science Intern", "Analytics Pro")
+                  }
                   className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
                 >
                   Apply Now
@@ -132,10 +176,18 @@ const StudentPortal: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <h2 className="text-2xl font-semibold mb-4">Your Profile</h2>
             <div className="space-y-2">
-              <p><strong>Name:</strong> John Doe</p>
-              <p><strong>Email:</strong> john.doe@fcrit.ac.in</p>
-              <p><strong>Department:</strong> Computer Engineering</p>
-              <p><strong>Year:</strong> 3rd Year</p>
+              <p>
+                <strong>Name:</strong> John Doe
+              </p>
+              <p>
+                <strong>Email:</strong> john.doe@fcrit.ac.in
+              </p>
+              <p>
+                <strong>Department:</strong> Computer Engineering
+              </p>
+              <p>
+                <strong>Year:</strong> 3rd Year
+              </p>
             </div>
             <button
               onClick={() => setIsEditProfileModalOpen(true)}
@@ -148,11 +200,15 @@ const StudentPortal: React.FC = () => {
             <h2 className="text-2xl font-semibold mb-4">Application Status</h2>
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold">Software Engineering Intern - TechCorp Inc.</h3>
+                <h3 className="font-semibold">
+                  Software Engineering Intern - TechCorp Inc.
+                </h3>
                 <p className="text-sm text-green-600">Application Submitted</p>
               </div>
               <div>
-                <h3 className="font-semibold">Web Development Intern - WebSolutions Ltd.</h3>
+                <h3 className="font-semibold">
+                  Web Development Intern - WebSolutions Ltd.
+                </h3>
                 <p className="text-sm text-yellow-600">Under Review</p>
               </div>
             </div>
